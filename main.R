@@ -5,6 +5,13 @@
 # Load the libraries
 library(igraph)
 
+t0 <- Sys.time()
+
+# Create plots folder if necessary
+if (!dir.exists("plots")) {
+  dir.create("plots")
+}
+
 # Tasks 1 and 2 ####
 # Define the parameters
 n <- 1000                                     # number of nodes
@@ -116,7 +123,7 @@ cols <- c("#9e0142", "#d53e4f", "#f46d43", "#abdda4", "#66c2a5", "#3288bd", "#5e
 for (p in p0) { # for every initial fraction of infected nodes
   for (j in 1:length(beta)) { # for every configuration of beta and gamma
     
-    jpeg(paste0(p, "-", j, ".jpg"))
+    jpeg(file.path("plots", paste0(p, "-", j, ".jpg")))
     par(mar = c(5, 4, 4, 10))
     
     for (g in 1:length(list_graphs)) { # for every graph type
@@ -147,7 +154,11 @@ beta_over_gamma <- beta / gamma
 for (i in 1:length(beta)) {
   for (j in 1:length(list_eigen)) {
     cat("Beta: ", beta[i], " Gamma: ", gamma[i], " Graph: ", list_graphs[[j]]$name, 
-        ". The epidemic will continue?", (beta[i] / gamma[i] * list_eigen[[j]]) >= 1, "\n",
+        ". The epidemic will continue? ", (beta[i] / gamma[i] * list_eigen[[j]]) >= 1, "\n",
         sep = "")
   }
 }
+
+tf <- Sys.time()
+cat("Running time of procedural code (s):", difftime(tf, t0, units = "secs"))
+
