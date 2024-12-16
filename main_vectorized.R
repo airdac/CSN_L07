@@ -4,14 +4,33 @@
 
 # Load libraries
 library(igraph)
+source("functions.R")
 
 t0 <- Sys.time()
-# Create plots folder if necessary
-if (!dir.exists("plots_vectorized")) {
-  dir.create("plots_vectorized")
+
+# Create tables and plots folders if necessary
+if (!dir.exists("tables")) {
+  dir.create("tables")
+}
+if (!dir.exists("plots_vectorized1")) {
+  dir.create("plots_vectorized1")
+}
+if (!dir.exists("plots_vectorized2")) {
+  dir.create("plots_vectorized2")
+}
+if (!dir.exists(file.path("plots_vectorized2", "below"))) {
+  dir.create(file.path("plots_vectorized2", "below"))
+}
+if (!dir.exists(file.path("plots_vectorized2", "above"))) {
+  dir.create(file.path("plots_vectorized2", "above"))
 }
 
-# Tasks 1 and 2 ####
+cols <- c("#9e0142", "#d53e4f", "#f46d43", "#abdda4", "#66c2a5", "#3288bd", "#5e4fa2")
+
+##############################
+# Task 1
+##############################
+
 # Define the parameters
 n <- 1000                                     # number of nodes
 m_ER <- 2*n                                   # number of edges in the ER graph
@@ -20,17 +39,32 @@ m_BA <- 1                                     # number of edges to add at each s
 t_max <- 20                                   # number of time steps
 p0 <- c(1/100, 5/100, 10/100, 20/100)         # fraction of nodes initially infected
 
+# Beta and gamma chosen so that beta/gamma = 0.001 0.050 0.200 0.500 2.000
 gamma <- c(0.4, 0.05, 0.8, 0.9, 0.45)         # probability of recovery
 beta <- c(0.0004, 0.0025, 0.16, 0.45, 0.9)    # probability of infecting
 
 # Create graphs
 ER <- sample_gnm(n, m_ER)
+ER <- set_graph_attr(ER, "name", "ER")
+
 BA <- sample_pa(n, m_BA, directed = FALSE)
-WS <- sample_smallworld(dim = 1, n, nei = 2, p = 0.2); WS <- simplify(WS)
-FC <- make_full_graph(n) # Fully Connected
+BA <- set_graph_attr(BA, "name", "BA")
+
+WS <- sample_smallworld(dim = 1, n, nei = 2, p = 0.2)
+WS <- simplify(WS)
+WS <- set_graph_attr(WS, "name", "WS")
+
+FC <- make_full_graph(n) 
+FC <- set_graph_attr(FC, "name", "Fully Connected")
+
 Tree <- make_tree(n, mode = "undirected")
+Tree <- set_graph_attr(Tree, "name", "Tree")
+
 Star <- make_star(n, mode = "undirected")
+Star <- set_graph_attr(Star, "name", "Star")
+
 Lattice <- make_lattice(dimvector = c(10, 10, 10))
+Lattice <- set_graph_attr(Lattice, "name", "Lattice")
 
 list_graphs <- list(ER, BA, WS, FC, Tree, Star, Lattice)
 list_graphs <- setNames(list_graphs, c("ER", "BA", "WS", "Fully Connected"
@@ -38,42 +72,6 @@ list_graphs <- setNames(list_graphs, c("ER", "BA", "WS", "Fully Connected"
 
 # Compute leading eigenvalue
 list_eigen <- sapply(list_graphs, function(g) eigen(as_adjacency_matrix(g))$values[1])
-
-# Infection simulation
-simulate_spread <- function(graph, p, beta, gamma) {
-  A <- as_adjacency_matrix(graph)
-  
-  # Create node labels with initial proportion of infected
-  infected_idx <- sample(1:n, max(1, round(n * p)))
-  node_labels <- matrix(0, nrow = t_max+1, ncol = n)
-  node_labels[1, infected_idx] <- 1
-  
-  # Run the algorithm for t_max time steps
-  for (t in 1:t_max) {
-    infected <- node_labels[t, ] == 1
-    
-    # For every infected node, recover it with probability gamma
-    n_infected <- sum(infected)
-    recovered <- runif(n_infected) <= gamma
-    
-    # For every susceptible node, compute its number of infected neighbours
-    k_infected <- A[!infected,] %*% infected
-    
-    # For every susceptible node, compute its probability of getting infected
-    infection_prob <- 1 - (1 - beta)^k_infected
-    
-    # For every susceptible node, infect it with probability infection_prob
-    n_susceptible <- sum(!infected)
-    new_infected <- runif(n_susceptible) <= infection_prob
-    
-    # Assign labels to time step t + 1
-    node_labels[t + 1, infected] <- as.numeric(recovered)
-    node_labels[t + 1, !infected] <- as.numeric(new_infected)
-  }
-  
-  # Calculate the proportion of infected nodes at each time step
-  rowMeans(node_labels)
-}
 
 # Run simulations
 
@@ -89,9 +87,11 @@ list_p_inf <- lapply(list_graphs, function(graph) {
     # Create a list of proportions of infected for every configuration of beta and gamma
     beta_results <- sapply(seq_along(beta), function(beta_idx) {
       
-      # Run the simulation
-      result <- simulate_spread(graph, p, beta[beta_idx], gamma[beta_idx])
-      setNames(result, seq(0, t_max))
+      # Run the simulation 15 times and average results
+      run_results <- replicate(15, simulate_spread(graph, p, beta[beta_idx]
+                                                   , gamma[beta_idx], n, t_max))
+      avg_result <- rowMeans(run_results)
+      setNames(avg_result, seq(0, t_max))
     }, simplify = FALSE)
     
     setNames(beta_results, seq_along(beta))
@@ -103,38 +103,12 @@ list_p_inf <- setNames(list_p_inf, names(list_graphs))
 
 
 # Plot proportion of infected for every combination of parameters
-cols <- c("#9e0142", "#d53e4f", "#f46d43", "#abdda4", "#66c2a5", "#3288bd", "#5e4fa2")
-plot_infected_proportion <- function(p, beta_idx, list_graphs, t_max, list_p_inf, cols) {
-  jpeg(file.path("plots_vectorized", paste0(p, "-", beta_idx, ".jpg")))
-  par(mar = c(5, 4, 4, 10))
-  
-  # Plot for each graph
-  lapply(seq_along(list_graphs), function(g) {
-    
-    # Extract the proportion of infected nodes for the graph, p0, and beta-gamma configuration
-    infected_prop <- list_p_inf[[names(list_graphs)[g]]][[as.character(p)]][[beta_idx]]
-    
-    if (g == 1) {
-      plot(seq(0, t_max, by = 1), 
-           infected_prop, 
-           col = cols[g], type = "b", pch = 19, 
-           ylim = c(0, 1), xlab = "t", ylab = "p")
-    } else {
-      lines(seq(0, t_max, by = 1), 
-            infected_prop, 
-            col = cols[g], type = "b", pch = 19)
-    }
-  })
-  
-  legend("topright", names(list_graphs),
-         col = cols, lty = 1, pch = 19, xpd = TRUE, inset = c(-0.5, 0))
-  dev.off()
-}
-
 param_combinations <- expand.grid(p = p0, beta_idx = seq_along(beta))
 invisible(
   apply(param_combinations, 1, function(params) {
-    plot_infected_proportion(params['p'], params['beta_idx']
+    plot_infected_proportion("plots_vectorized1", params['p'], params['beta_idx']
+                             , beta[params['beta_idx']]
+                             , gamma[params['beta_idx']]
                              , list_graphs, t_max, list_p_inf, cols)
   })
 )
@@ -152,6 +126,130 @@ invisible(
         "\n", sep = "")
   }, param_combinations$eigen_idx, param_combinations$beta_idx)
 )
+
+thresholds_surpassed <- outer(beta_over_gamma, thresholds, ">=")
+rownames(thresholds_surpassed) <- beta_over_gamma
+print("Table: reachability of the theoretical threshold for every beta/gamma")
+print(thresholds_surpassed)
+write.table(thresholds_surpassed, file.path("tables", "thresholds_surpassed.txt"), sep = "\t"
+            , row.names = TRUE, col.names = TRUE, quote = FALSE)
+
+# Analysis of the plots based on the previous table:
+# beta/gamma = 0.001: correct
+# beta/gamma = 0.05: correct except for Star, which has a threshold close to 0.05
+# beta/gamma = 0.2: correct except for WS, which has a threshold close to 0.2
+# beta/gamma = 0.5: correct
+# beta/gamma = 2: correct
+
+thresholds[c("Star", "WS")]
+
+##############################
+# Task 2
+##############################
+
+# For each beta value and graph, compute the gamma value s.t. beta/gamma = threshold
+
+# Fully Connected and Star graphs require a very low beta to reach the threshold.
+# We want to run each simulation with at least 3 beta-gamma configurations,
+# so we combine reasonable configurations with 3 that have a very low beta
+
+beta2_small <- exp(seq(log(1e-4), log(8e-4), length.out = 3))
+beta2_large <- exp(seq(log(0.01), log(0.15), length.out = 3))
+beta2 <- c(beta2_small, beta2_large)
+gamma2 <- outer(beta2, thresholds, "/")
+rownames(gamma2) <- round(beta2, 4)
+gamma2[gamma2 > 1] <- NA
+
+gamma2_below <- gamma2 * 1.1
+gamma2_below[gamma2_below > 1] <- NA
+gamma2_below
+
+gamma2_above <- gamma2 * 0.9
+gamma2_above
+
+# Run simulations with beta-gamma configurations below threshold
+list_p_inf2_below <- lapply(list_graphs, function(graph) {
+  
+  cat("Processing graph: ", graph$name, "\n")
+  
+  # Create a list of results for each initial fraction of infected (p0)
+  p_results <- lapply(p0, function(p) {
+    
+    # Create a list of proportions of infected for every configuration of beta and gamma
+    beta_results <- sapply(seq_along(beta2), function(beta_idx) {
+      # If the threshold cannot be reached, return NA
+      if (is.na(gamma2_below[beta_idx, graph$name])) return(NA)
+      
+      # Run the simulation 15 times and average results
+      run_results <- replicate(15, simulate_spread(graph, p, beta2[beta_idx]
+                                                   , gamma2_below[beta_idx, graph$name]
+                                                   , n, t_max))
+      avg_result <- rowMeans(run_results)
+      setNames(avg_result, seq(0, t_max))
+    }, simplify = FALSE)
+    
+    setNames(beta_results, seq_along(beta2))
+  })
+  
+  setNames(p_results, p0)
+})
+list_p_inf2_below <- setNames(list_p_inf2_below, names(list_graphs))
+
+# Plot proportion of infected with beta-gamma configurations below threshold
+param_combinations <- expand.grid(p = p0, graph_name = names(list_graphs))
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold(file.path("plots_vectorized2", "below"), params['graph_name']
+                             , params['p'], beta2, gamma2_below[,params['graph_name']]
+                             ,t_max, list_p_inf2_below, thresholds, cols)
+  })
+)
+
+# Run simulations with beta-gamma configurations above threshold
+list_p_inf2_above <- lapply(list_graphs, function(graph) {
+  
+  cat("Processing graph: ", graph$name, "\n")
+  
+  # Create a list of results for each initial fraction of infected (p0)
+  p_results <- lapply(p0, function(p) {
+    
+    # Create a list of proportions of infected for every configuration of beta and gamma
+    beta_results <- sapply(seq_along(beta2), function(beta_idx) {
+      # If the threshold cannot be reached, return NA
+      if (is.na(gamma2_above[beta_idx, graph$name])) return(NA)
+      
+      # Run the simulation 15 times and average results
+      run_results <- replicate(15, simulate_spread(graph, p, beta2[beta_idx]
+                                                   , gamma2_above[beta_idx, graph$name]
+                                                   , n, t_max))
+      avg_result <- rowMeans(run_results)
+      setNames(avg_result, seq(0, t_max))
+    }, simplify = FALSE)
+    
+    setNames(beta_results, seq_along(beta2))
+  })
+  
+  setNames(p_results, p0)
+})
+list_p_inf2_above <- setNames(list_p_inf2_above, names(list_graphs))
+
+# Plot proportion of infected with beta-gamma configurations above threshold
+param_combinations <- expand.grid(p = p0, graph_name = names(list_graphs))
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold(file.path("plots_vectorized2", "above"), params['graph_name']
+                   , params['p'], beta2, gamma2_above[,params['graph_name']]
+                   ,t_max, list_p_inf2_above, thresholds, cols)
+  })
+)
+
+
+
+
+
+
+
+
 
 tf <- Sys.time()
 cat("Running time of vectorized code (s):", difftime(tf, t0, units = "secs"))
