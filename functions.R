@@ -94,7 +94,7 @@ plot_threshold <- function(directory, graph_name, p, beta, gamma, t_max, list_p_
            col = cols[beta_idx], type = "b", pch = 19, 
            ylim = c(0, 1), xlab = "t", ylab = "p"
            , main = bquote(p[0] == .(p) ~ ", "
-                           ~ Network == .(graph_name)
+                           ~ Network == .(graph_name) ~ ", "
                            ~ Threshold == .(round(thresholds[graph_name], 4))))
     } else {
       lines(seq(0, t_max, by = 1), 

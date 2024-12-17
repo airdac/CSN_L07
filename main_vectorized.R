@@ -36,7 +36,7 @@ n <- 1000                                     # number of nodes
 m_ER <- 2*n                                   # number of edges in the ER graph
 m_BA <- 1                                     # number of edges to add at each step in the BA model
 
-t_max <- 20                                   # number of time steps
+t_max <- 50                                   # number of time steps
 p0 <- c(1/100, 5/100, 10/100, 20/100)         # fraction of nodes initially infected
 
 # Beta and gamma chosen so that beta/gamma = 0.001 0.050 0.200 0.500 2.000
@@ -153,18 +153,23 @@ thresholds[c("Star", "WS")]
 # We want to run each simulation with at least 3 beta-gamma configurations,
 # so we combine reasonable configurations with 3 that have a very low beta
 
-beta2_small <- exp(seq(log(1e-4), log(8e-4), length.out = 3))
-beta2_large <- exp(seq(log(0.01), log(0.15), length.out = 3))
-beta2 <- c(beta2_small, beta2_large)
+beta2_small <- exp(seq(log(1e-4), log(5e-4), length.out = 3))
+beta2_large <- exp(seq(log(0.01), log(0.1), length.out = 3))
+beta2_very_large <- exp(seq(log(0.14), log(0.3), length.out = 5))
+beta2 <- c(beta2_small, beta2_large, beta2_very_large)
 gamma2 <- outer(beta2, thresholds, "/")
 rownames(gamma2) <- round(beta2, 4)
-gamma2[gamma2 > 1] <- NA
+gamma2[gamma2 > 1] <- 1
 
-gamma2_below <- gamma2 * 1.1
-gamma2_below[gamma2_below > 1] <- NA
+# Results are robust. There is only a pandemic when gamma is very large
+# which does not coincide with the 1/lambda threshold, but does coincide with
+# the standard SIS model because gamma > beta
+gamma2_below <- gamma2 * 1.5
+gamma2_below[gamma2_below > 1] <- 1
 gamma2_below
 
-gamma2_above <- gamma2 * 0.9
+# Results are not very robust.
+gamma2_above <- gamma2 * 0.5
 gamma2_above
 
 # Run simulations with beta-gamma configurations below threshold
@@ -200,8 +205,9 @@ param_combinations <- expand.grid(p = p0, graph_name = names(list_graphs))
 invisible(
   apply(param_combinations, 1, function(params) {
     plot_threshold(file.path("plots_vectorized2", "below"), params['graph_name']
-                             , params['p'], beta2, gamma2_below[,params['graph_name']]
-                             ,t_max, list_p_inf2_below, thresholds, cols)
+                   , params['p'], beta2, gamma2_below[,params['graph_name']]
+                   , t_max, list_p_inf2_below, thresholds
+                   , colorRampPalette(cols)(11))
   })
 )
 
@@ -239,7 +245,8 @@ invisible(
   apply(param_combinations, 1, function(params) {
     plot_threshold(file.path("plots_vectorized2", "above"), params['graph_name']
                    , params['p'], beta2, gamma2_above[,params['graph_name']]
-                   ,t_max, list_p_inf2_above, thresholds, cols)
+                   , t_max, list_p_inf2_above, thresholds
+                   , colorRampPalette(cols)(11))
   })
 )
 
