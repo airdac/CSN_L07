@@ -166,7 +166,7 @@ plot_threshold_combined <- function(directory, graph_name, p, beta, gamma, t_max
   beta_gamma_list <- mapply(function(b, g) {
     if (is.na(g)) return(NULL)
     else {
-      bquote(beta == .(b) ~ ", " ~ gamma == .(g) ~ ", "
+      bquote(gamma == .(g) ~ ", "
              ~ beta/gamma == .(round(b/g,4)))
     }
     }, round(beta,4), round(gamma, 4), SIMPLIFY = TRUE)
@@ -176,7 +176,7 @@ plot_threshold_combined <- function(directory, graph_name, p, beta, gamma, t_max
   n_plots <- length(beta_gamma_list)
   # Add legend
   legend("topright", legend = beta_gamma_list,
-         col = cols[1:n_plots], lty = 1, pch = 19, xpd = TRUE, inset = c(-1.1, 0))
+         col = cols[1:n_plots], lty = 1, pch = 19, xpd = TRUE, inset = c(-0.4, 0))
 }
 
 

@@ -49,20 +49,21 @@ dev.off()
 ################
 # Task 2 below
 ################
-param_combinations <- expand.grid(p = p0, graph_name = names(list_graphs))
+# 1st plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[1:3]), p = p0)
 
 # Determine layout
 n_plots <- nrow(param_combinations)
-n_col <- 4
-n_row <- ceiling(n_plots / n_col)
+n_col <- 3
+n_row <- 4
 
-path.file <- file.path("combined_plots", "combined_plots2_below.pdf")
+path.file <- file.path("combined_plots", "combined_plots2_below1.pdf")
 pdf(path.file, width = 10, height = 12)  # same 5:6 ratio as 1000x1200
 
 # Adjust cex and lwd to make text, points, and lines smaller
 par(mfrow = c(n_row, n_col), 
-    mar = c(5,4,4,20), 
-    oma = c(0,0,0,0),
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
     cex = 0.3,        # scale down overall text/points
     cex.axis = 0.7,
     cex.lab = 0.7,
@@ -78,26 +79,107 @@ invisible(
   })
 )
 
+# Adjust legend text size as well if needed
 par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(0.8,-0.35), cex = 2, title = expression(beta), horiz=T)
+
 dev.off()
+
+
+# 2nd plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[4:5]), p = p0)
+
+# Determine layout
+n_plots <- nrow(param_combinations)
+n_col <- 2
+n_row <- 4
+
+path.file <- file.path("combined_plots", "combined_plots2_below2.pdf")
+pdf(path.file, width = 6.66, height = 12)  # same 5:6 ratio as 1000x1200
+
+# Adjust cex and lwd to make text, points, and lines smaller
+par(mfrow = c(n_row, n_col), 
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
+    cex = 0.3,        # scale down overall text/points
+    cex.axis = 0.7,
+    cex.lab = 0.7,
+    cex.main = 1.8,
+    lwd = 0.7)         # thinner lines
+
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold_combined(file.path("plots_vectorized2", "below"), params['graph_name']
+                            , params['p'], beta2, gamma2_below[,params['graph_name']]
+                            , t_max, list_p_inf2_below, thresholds
+                            , colorRampPalette(cols)(11))
+  })
+)
+
+# Adjust legend text size as well if needed
+par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(-0.1,-0.35), cex = 2, title = expression(beta), horiz=T)
+
+dev.off()
+
+# 3rd plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[6:7]), p = p0)
+
+# Determine layout
+n_plots <- nrow(param_combinations)
+n_col <- 2
+n_row <- 4
+
+path.file <- file.path("combined_plots", "combined_plots2_below3.pdf")
+pdf(path.file, width = 6.66, height = 12)  # same 5:6 ratio as 1000x1200
+
+# Adjust cex and lwd to make text, points, and lines smaller
+par(mfrow = c(n_row, n_col), 
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
+    cex = 0.3,        # scale down overall text/points
+    cex.axis = 0.7,
+    cex.lab = 0.7,
+    cex.main = 1.8,
+    lwd = 0.7)         # thinner lines
+
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold_combined(file.path("plots_vectorized2", "below"), params['graph_name']
+                            , params['p'], beta2, gamma2_below[,params['graph_name']]
+                            , t_max, list_p_inf2_below, thresholds
+                            , colorRampPalette(cols)(11))
+  })
+)
+
+# Adjust legend text size as well if needed
+par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(-0.1,-0.35), cex = 2, title = expression(beta), horiz=T)
+
+dev.off()
+
 
 ################
 # Task 2 above
 ################
-param_combinations <- expand.grid(p = p0, graph_name = names(list_graphs))
+# 1st plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[1:3]), p = p0)
 
 # Determine layout
 n_plots <- nrow(param_combinations)
-n_col <- 4
-n_row <- ceiling(n_plots / n_col)
+n_col <- 3
+n_row <- 4
 
-path.file <- file.path("combined_plots", "combined_plots2_above.pdf")
+path.file <- file.path("combined_plots", "combined_plots2_above1.pdf")
 pdf(path.file, width = 10, height = 12)  # same 5:6 ratio as 1000x1200
 
 # Adjust cex and lwd to make text, points, and lines smaller
 par(mfrow = c(n_row, n_col), 
-    mar = c(5,4,4,20), 
-    oma = c(0,0,0,0),
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
     cex = 0.3,        # scale down overall text/points
     cex.axis = 0.7,
     cex.lab = 0.7,
@@ -113,5 +195,84 @@ invisible(
   })
 )
 
+# Adjust legend text size as well if needed
 par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(0.8,-0.35), cex = 2, title = expression(beta), horiz=T)
+
+dev.off()
+
+
+# 2nd plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[4:5]), p = p0)
+
+# Determine layout
+n_plots <- nrow(param_combinations)
+n_col <- 2
+n_row <- 4
+
+path.file <- file.path("combined_plots", "combined_plots2_above2.pdf")
+pdf(path.file, width = 6.66, height = 12)  # same 5:6 ratio as 1000x1200
+
+# Adjust cex and lwd to make text, points, and lines smaller
+par(mfrow = c(n_row, n_col), 
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
+    cex = 0.3,        # scale down overall text/points
+    cex.axis = 0.7,
+    cex.lab = 0.7,
+    cex.main = 1.8,
+    lwd = 0.7)         # thinner lines
+
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold_combined(file.path("plots_vectorized2", "above"), params['graph_name']
+                            , params['p'], beta2, gamma2_above[,params['graph_name']]
+                            , t_max, list_p_inf2_above, thresholds
+                            , colorRampPalette(cols)(11))
+  })
+)
+
+# Adjust legend text size as well if needed
+par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(-0.1,-0.35), cex = 2, title = expression(beta), horiz=T)
+
+dev.off()
+
+# 3rd plot
+param_combinations <- expand.grid(graph_name = names(list_graphs[6:7]), p = p0)
+
+# Determine layout
+n_plots <- nrow(param_combinations)
+n_col <- 2
+n_row <- 4
+
+path.file <- file.path("combined_plots", "combined_plots2_above3.pdf")
+pdf(path.file, width = 6.66, height = 12)  # same 5:6 ratio as 1000x1200
+
+# Adjust cex and lwd to make text, points, and lines smaller
+par(mfrow = c(n_row, n_col), 
+    mar = c(5,4,4,15), 
+    oma = c(10,0,0,0),
+    cex = 0.3,        # scale down overall text/points
+    cex.axis = 0.7,
+    cex.lab = 0.7,
+    cex.main = 1.8,
+    lwd = 0.7)         # thinner lines
+
+invisible(
+  apply(param_combinations, 1, function(params) {
+    plot_threshold_combined(file.path("plots_vectorized2", "above"), params['graph_name']
+                            , params['p'], beta2, gamma2_above[,params['graph_name']]
+                            , t_max, list_p_inf2_above, thresholds
+                            , colorRampPalette(cols)(11))
+  })
+)
+
+# Adjust legend text size as well if needed
+par(xpd = NA)
+legend("bottomright", legend = round(beta2, 4), col = colorRampPalette(cols)(11), pch = 19, bty = "n",
+       inset = c(-0.1,-0.35), cex = 2, title = expression(beta), horiz=T)
+
 dev.off()
