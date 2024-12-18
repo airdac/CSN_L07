@@ -116,6 +116,8 @@ invisible(
 
 # Show whether theoretical epidemic thresholds will be surpassed
 thresholds <- 1/unlist(list_eigen)
+write.table(round(t(thresholds), 4), file.path("tables", "thresholds.txt"), sep = "\t"
+            , row.names = FALSE, col.names = TRUE, quote = FALSE)
 beta_over_gamma <- beta / gamma
 param_combinations <- expand.grid(eigen_idx = seq_along(list_eigen), beta_idx = seq_along(beta))
 invisible(
@@ -165,7 +167,7 @@ gamma2[gamma2 > 1] <- 1
 # which does not coincide with the 1/lambda threshold, but does coincide with
 # the standard SIS model because gamma > beta
 gamma2_below <- gamma2 * 1.5
-gamma2_below[gamma2_below > 1] <- 1
+gamma2_below[gamma2_below > 1] <- NA
 gamma2_below
 
 # Results are not very robust.

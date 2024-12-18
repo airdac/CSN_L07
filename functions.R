@@ -43,8 +43,9 @@ simulate_spread <- function(graph, p, beta, gamma, n, t_max) {
 
 # Plot proportion of infected for every combination of parameters
 plot_infected_proportion <- function(directory, p, beta_idx, beta, gamma, list_graphs, t_max, list_p_inf, cols) {
-  jpeg(file.path(directory, paste0(p, "-", beta_idx, ".jpg")))
-  par(mar = c(5, 4, 4, 10))
+  jpeg(file.path(directory, paste0(p, "-", beta_idx, ".jpg"))
+       , width=500, height = 400)
+  par(mar = c(5, 4, 4, 4))
   
   # Plot for each graph
   lapply(seq_along(list_graphs), function(g) {
@@ -71,6 +72,27 @@ plot_infected_proportion <- function(directory, p, beta_idx, beta, gamma, list_g
   legend("topright", names(list_graphs),
          col = cols, lty = 1, pch = 19, xpd = TRUE, inset = c(-0.5, 0))
   dev.off()
+}
+
+# To combine all plots
+plot_infected_proportion_no_legend <- function(p, beta_idx, beta, gamma, list_graphs, t_max, list_p_inf, cols) {
+  # Just plot the lines/points
+  first_graph <- TRUE
+  for (g in seq_along(list_graphs)) {
+    infected_prop <- list_p_inf[[names(list_graphs)[g]]][[as.character(p)]][[beta_idx]]
+    if (first_graph) {
+      plot(seq(0, t_max, by = 1), infected_prop, 
+           col = cols[g], type = "b", pch = 19, 
+           ylim = c(0, 1), xlab = "t", ylab = "p",
+           main = bquote(p[0] == .(p) ~ ", "
+                         ~ beta == .(beta) ~ ", "
+                         ~ gamma == .(gamma) ~ ", "
+                         ~ beta/gamma == .(beta/gamma)))
+      first_graph <- FALSE
+    } else {
+      lines(seq(0, t_max, by = 1), infected_prop, col = cols[g], type = "b", pch = 19)
+    }
+  }
 }
 
 # Plot proportion of infected on a single graph for every beta-gamma configuration
@@ -110,4 +132,52 @@ plot_threshold <- function(directory, graph_name, p, beta, gamma, t_max, list_p_
          col = cols, lty = 1, pch = 19, xpd = TRUE, inset = c(-0.65, 0))
   dev.off()
 }
+
+# To combine all plots
+plot_threshold_combined <- function(directory, graph_name, p, beta, gamma, t_max, list_p_inf, thresholds, cols) {
+  # Plot for each beta-gamma configuration
+  first_plot <- TRUE
+  for (beta_idx in seq_along(beta)) {
+    p_str <- sub("0+$", "", as.character(p))
+    infected_prop <- list_p_inf[[graph_name]][[p_str]][[beta_idx]]
+    
+    if (length(infected_prop) <= 1) next
+    
+    if (first_plot) {
+      plot(seq(0, t_max, by = 1), 
+           infected_prop, 
+           col = cols[beta_idx], type = "b", pch = 19, 
+           ylim = c(0, 1), xlab = "t", ylab = "p",
+           main = NULL)  # Remove main title from plot
+      # Add title aligned to the right
+      title(main = bquote(p[0] == .(p) ~ ", "
+                          ~ Network == .(graph_name) ~ ", "
+                          ~ Threshold == .(round(thresholds[graph_name], 4))),
+            adj = 0)  # adj = 1 for right alignment
+      first_plot <- FALSE
+    } else {
+      lines(seq(0, t_max, by = 1), 
+            infected_prop, 
+            col = cols[beta_idx], type = "b", pch = 19)
+    }
+  }
+  
+  # Create legend labels
+  beta_gamma_list <- mapply(function(b, g) {
+    if (is.na(g)) return(NULL)
+    else {
+      bquote(beta == .(b) ~ ", " ~ gamma == .(g) ~ ", "
+             ~ beta/gamma == .(round(b/g,4)))
+    }
+    }, round(beta,4), round(gamma, 4), SIMPLIFY = TRUE)
+  # Hide legend of missing plots
+  beta_gamma_list <- beta_gamma_list[!sapply(beta_gamma_list, is.null)]
+  # Number of plots
+  n_plots <- length(beta_gamma_list)
+  # Add legend
+  legend("topright", legend = beta_gamma_list,
+         col = cols[1:n_plots], lty = 1, pch = 19, xpd = TRUE, inset = c(-1.1, 0))
+}
+
+
 
